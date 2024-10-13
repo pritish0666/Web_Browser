@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electron Web Browser</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            display: flex;
+            background-color: #333;
+            padding: 10px;
+            align-items: center;
+        }
+        .navbar button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px;
+            margin-right: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .navbar button:hover {
+            background-color: #45a049;
+        }
+        .navbar input {
+            padding: 10px;
+            width: 60%;
+            font-size: 16px;
+            margin-right: 5px;
+        }
+        .navbar button#home-btn {
+            background-color: #f44336;
+        }
+        .navbar button#home-btn:hover {
+            background-color: #e53935;
+        }
+        #webview-container {
+            width: 100%;
+            height: calc(100vh - 50px); /* Remaining height after navbar */
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <button id="back-btn">Back</button>
+        <button id="forward-btn">Forward</button>
+        <button id="home-btn">Home</button>
+        <input type="text" id="url-input" placeholder="Enter URL (e.g., https://google.com)">
+        <button id="search-button">Search</button>
+    </div>
+
+    <div id="webview-container"></div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        function search() {
+            let url = document.getElementById('url-input').value.trim();
+
+            // If the input doesn't include a protocol, treat it as a search query or URL
+            if (!/^https?:\/\//i.test(url)) {
+                if (!url.includes('.')) {
+                    // Treat as search query and search on Google
+                    url = 'https://www.google.com/search?q=' + encodeURIComponent(url);
+                } else {
+                    // Treat as a domain and prepend 'http://'
+                    url = 'http://' + url;
+                }
+            }
+            ipcRenderer.send('search-url', url);
+        }
+
+        // Search button functionality
+        document.getElementById('search-button').addEventListener('click', search);
+
+        // Handle Enter key for URL input field
+        document.getElementById('url-input').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                search(); // Trigger search on Enter key press
+            }
+        });
+
+        // Back button functionality
+        document.getElementById('back-btn').addEventListener('click', () => {
+            ipcRenderer.send('navigate-back');
+        });
+
+        // Forward button functionality
+        document.getElementById('forward-btn').addEventListener('click', () => {
+            ipcRenderer.send('navigate-forward');
+        });
+
+        // Home button functionality
+        document.getElementById('home-btn').addEventListener('click', () => {
+            ipcRenderer.send('search-url', 'https://www.google.com'); // Set Google as the homepage
+        });
+    </script>
+</body>
+</html>
